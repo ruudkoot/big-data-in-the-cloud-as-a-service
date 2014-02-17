@@ -1,10 +1,13 @@
 module Main where
 
 import Control.Concurrent
-import Control.Exception
-import Data.Time
+import Control.Exception hiding (Handler)
+import Control.Monad
+import Control.Monad.Reader
 import Network
-import System.Console.ANSI
+
+import Handler
+import Logging
 
 -- | Configuration
 
@@ -15,38 +18,36 @@ port = 8666
 
 main :: IO ()
 main = withSocketsDo $ do
+    chan <- newChan
+    forkIO (messageProcess chan)
     socket <- listenOn (PortNumber port)
-    handleConnections socket
-    
-handleConnections :: Socket -> IO ()
-handleConnections socket = do
-    (handle, hostName, portNumber) <- accept socket
-    message Info ("Incoming connection from " ++ hostName ++ ":" ++ show portNumber)
-    threadId <- forkFinally handleRequest handleException
-    message Info ("Forked a thread with id " ++ show threadId)
-    handleConnections socket
-    
-handleRequest :: IO ()
-handleRequest = undefined
+    runReaderT (handleConnections socket) chan
 
-handleException :: Show a => Either SomeException a -> IO ()
+-- | Connection handling
+
+handleConnections :: Socket -> Handler ()
+handleConnections socket = do
+
+    (handle, hostName, portNumber) <- liftIO $ accept socket
+
+    message Info $
+        "Incoming connection from " ++ hostName ++ ":" ++ show portNumber
+
+    handleRequest'   <- runHandler  handleRequest
+    handleException' <- runHandler1 handleException
+    threadId         <- liftIO $ forkFinally handleRequest' handleException'
+
+    message Info $
+        "Forked a thread with id " ++ show threadId
+
+    handleConnections socket
+    
+handleRequest :: Handler ()
+handleRequest = message Warning $
+    "handleRequest"
+
+handleException :: Show a => Either SomeException a -> Handler ()
 handleException (Left someException) = message Warning $
     "A thread terminated with the exception: " ++ show someException
 handleException (Right x) = message Info $
     "A thread terminated gracefully with value: " ++ show x
-
--- | Logging
-
-data LogClass = Info | Warning
-
-logColor :: LogClass -> Color
-logColor Info    = Blue
-logColor Warning = Red
-
-message :: LogClass -> String -> IO ()
-message logClass msg = do
-    currentTime <- getCurrentTime
-    setSGR [SetColor Foreground Vivid Black]
-    putStr ("[" ++ show currentTime ++ "] ")
-    setSGR [SetColor Foreground Dull (logColor logClass)]
-    putStrLn msg
