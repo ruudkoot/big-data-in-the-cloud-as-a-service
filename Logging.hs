@@ -1,6 +1,7 @@
 module Logging (
     module LogClass,
     message,
+    message',
     messageProcess
 ) where
 
@@ -21,6 +22,11 @@ message :: LogClass -> String -> Handler ()
 message logClass msg = do
     chan <- ask
     liftIO $ writeChan chan (logClass, msg)
+
+message' :: Show a => LogClass -> a -> Handler ()
+message' logClass msg = do
+    chan <- ask
+    liftIO $ writeChan chan (logClass, show msg)
 
 printMessage :: LogClass -> String -> IO ()
 printMessage logClass msg = do
