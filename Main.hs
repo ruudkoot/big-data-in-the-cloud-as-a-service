@@ -37,26 +37,19 @@ handleConnections socket = do
 
     (handle, hostName, portNumber) <- liftIO $ accept socket
 
-    message Info $
-        "Incoming connection from " ++ hostName ++ ":" ++ show portNumber
-
     handleRequest'   <- runHandler  (handleRequest handle)
     handleException' <- runHandler1 handleException
     threadId         <- liftIO $ forkFinally handleRequest' handleException'
-
-    message Info $
-        "Forked a thread with id " ++ show threadId
 
     handleConnections socket
     
 handleRequest :: Handle -> Handler ()
 handleRequest handle = do
-    -- message Warning $ "handleRequest"
     contents <- liftIO $ hGetContents handle
     let request@(Request _ url' _ headers) = parseRequest contents
     -- message' Info request
     let url@(URL _ resourcePath _) = parseURL (fromJust $ lookup "Host" headers) url'
-    -- message' Info url
+    message' Info url
 
     -- Routing
     let renderer = case resourcePath of
@@ -78,5 +71,4 @@ handleRequest handle = do
 handleException :: Show a => Either SomeException a -> Handler ()
 handleException (Left someException) = message Warning $
     "A thread terminated with the exception: " ++ show someException
-handleException (Right x) = message Info $
-    "A thread terminated gracefully with value: " ++ show x
+handleException (Right x) = return ()
