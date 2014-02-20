@@ -54,6 +54,8 @@ handleRequest handle = do
     -- Routing
     let renderer = case resourcePath of
             [""]            -> Just Page.Main.render
+            ["favicon.ico"] -> Just (Page.Static.render
+                                        ["html5-boilerplate-4.3.0","favicon.ico"])
             ("static":path) -> Just (Page.Static.render path)
             _               -> Nothing
 
