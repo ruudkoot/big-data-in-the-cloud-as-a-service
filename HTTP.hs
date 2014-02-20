@@ -61,4 +61,4 @@ respond404 = Response "HTTP/1.1" 404 "Page Not Found"
 
 respond500 :: Response
 respond500 = Response "HTTP/1.1" 500 "Internal Server Error"
-                      "An internal server error occured."
+                      "An internal server error occurred."
