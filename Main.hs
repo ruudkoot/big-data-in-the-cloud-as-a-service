@@ -38,7 +38,7 @@ handleConnections socket = do
     (handle, hostName, portNumber) <- liftIO $ accept socket
 
     handleRequest'   <- runHandler  (handleRequest handle)
-    handleException' <- runHandler1 handleException
+    handleException' <- runHandler1 (handleException handle)
     threadId         <- liftIO $ forkFinally handleRequest' handleException'
 
     handleConnections socket
@@ -68,7 +68,13 @@ handleRequest handle = do
         hPutStr handle (show response)
         hClose handle
 
-handleException :: Show a => Either SomeException a -> Handler ()
-handleException (Left someException) = message Warning $
-    "A thread terminated with the exception: " ++ show someException
-handleException (Right x) = return ()
+handleException :: Show a => Handle -> Either SomeException a -> Handler ()
+handleException handle (Left someException) = do
+    message Warning $
+        "A thread terminated with the exception: " ++ show someException
+    liftIO $ do
+        hPutStr handle (show respond500)
+        hClose handle
+handleException handle (Right x) = do
+    liftIO $ hClose handle
+    return ()

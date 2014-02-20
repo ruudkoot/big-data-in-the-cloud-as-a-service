@@ -11,7 +11,8 @@ module HTTP (
     MessageBody,
     Response(..),
     respond200,
-    respond404
+    respond404,
+    respond500
 ) where
 
 import Data.Char
@@ -55,4 +56,9 @@ respond200 :: MessageBody -> Response
 respond200 = Response "HTTP/1.1" 200 "OK"
 
 respond404 :: Response
-respond404 = Response "HTTP/1.1" 404 "Page Not Found" "page not found"
+respond404 = Response "HTTP/1.1" 404 "Page Not Found"
+                      "The requested page does not exist."
+
+respond500 :: Response
+respond500 = Response "HTTP/1.1" 500 "Internal Server Error"
+                      "An internal server error occured."
