@@ -10,7 +10,8 @@ module HTTP (
     ReasonPhrase,
     MessageBody,
     Response(..),
-    respond200
+    respond200,
+    respond404
 ) where
 
 import Data.Char
@@ -52,3 +53,6 @@ instance Show Response where
           
 respond200 :: MessageBody -> Response
 respond200 = Response "HTTP/1.1" 200 "OK"
+
+respond404 :: Response
+respond404 = Response "HTTP/1.1" 404 "Page Not Found" "page not found"

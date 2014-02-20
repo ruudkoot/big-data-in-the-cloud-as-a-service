@@ -4,12 +4,17 @@ import Control.Concurrent
 import Control.Exception hiding (Handler)
 import Control.Monad
 import Control.Monad.Reader
+import Data.Maybe
 import System.IO
 import Network
 
 import Handler
 import Logging
 import HTTP
+import URL
+
+import qualified Page.Main
+import qualified Page.Static
 
 -- | Configuration
 
@@ -46,12 +51,28 @@ handleConnections socket = do
     
 handleRequest :: Handle -> Handler ()
 handleRequest handle = do
-    message Warning $ "handleRequest"
+    -- message Warning $ "handleRequest"
     contents <- liftIO $ hGetContents handle
-    let request@(Request _ url _ _) = parseRequest contents
-    message' Info request
+    let request@(Request _ url' _ headers) = parseRequest contents
+    -- message' Info request
+    let url@(URL _ resourcePath _) = parseURL (fromJust $ lookup "Host" headers) url'
+    -- message' Info url
+
+    -- Routing
+    let renderer = case resourcePath of
+            [""]            -> Just Page.Main.render
+            ("static":path) -> Just (Page.Static.render path)
+            _               -> Nothing
+
+    -- Rendering
     liftIO $ do
-        hPutStrLn handle . show $ respond200 $ "This is " ++ url ++ "!"
+        response <- case renderer of
+            Just k -> do
+                messageBody <- k
+                return (respond200 messageBody)
+            Nothing -> do
+                return respond404
+        hPutStr handle (show response)
         hClose handle
 
 handleException :: Show a => Either SomeException a -> Handler ()
