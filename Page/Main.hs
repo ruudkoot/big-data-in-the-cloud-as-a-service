@@ -13,6 +13,7 @@ render = return $ unlines [
             "<title>Big Data in the Cloud-as-a-service</title>",
             "<link rel=\"stylesheet\" href=\"http://localhost:8666/static/bootstrap/3.1.1/css/bootstrap.min.css\">",
             "<link rel=\"stylesheet\" href=\"http://localhost:8666/static/bootstrap/3.1.1/css/bootstrap-theme.min.css\">",
+            "<script type=\"text/javascript\" src=\"http://localhost:8666/static/mathjax/MathJax.js\"></script>",
         "</head>",
         "<body>",
             "<h1>Title</h1>",
